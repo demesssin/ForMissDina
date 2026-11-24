@@ -1,0 +1,8 @@
+day_of_week,avg_price_range_pct,avg_volume_zscore
+Monday,1.1262,0.081
+Tuesday,1.0012,-0.0433
+Wednesday,0.934,-0.1216
+Thursday,0.9331,-0.1127
+Friday,1.1256,0.1273
+Saturday,1.0588,0.1996
+Sunday,0.9135,-0.1328
