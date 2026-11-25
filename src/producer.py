@@ -1,11 +1,3 @@
-"""Stage 2a: Kafka PRODUCER.
-
-Reads data/raw_data.csv, (optionally) adds deliberately broken test records and duplicates,
-serializes every record to JSON and publishes it to the Kafka topic.
-Message key = symbol (same symbol -> same partition). A run_id header marks this run's messages.
-
-Usage:  python -m src.producer [--no-inject]
-"""
 import argparse
 import json
 import logging
@@ -77,7 +69,7 @@ def main() -> int:
     run_id = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     counters = {"published": 0, "failed": 0}
 
-    def on_delivery(err, msg):                     # called by librdkafka for every message
+    def on_delivery(err, msg):                     
         if err is not None:
             counters["failed"] += 1
             if counters["failed"] <= 5:
@@ -88,7 +80,7 @@ def main() -> int:
     for record in records:
         try:
             payload = serialize(record)
-        except (TypeError, ValueError) as exc:     # serialization error
+        except (TypeError, ValueError) as exc:     
             counters["failed"] += 1
             log.error("Cannot serialize record: %s", exc)
             continue
@@ -98,9 +90,9 @@ def main() -> int:
                                  value=payload, headers=[("run_id", run_id.encode("utf-8"))],
                                  on_delivery=on_delivery)
                 break
-            except BufferError:                    # local queue full: serve callbacks and retry
+            except BufferError:                   
                 producer.poll(1.0)
-            except KafkaException as exc:          # transmission error
+            except KafkaException as exc:          
                 counters["failed"] += 1
                 log.error("Produce error: %s", exc)
                 break

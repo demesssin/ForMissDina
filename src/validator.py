@@ -1,24 +1,3 @@
-"""Stage 3: data validation with Pandera.
-
-Input : data/consumed_data.csv (what came out of Kafka)
-Output: data/valid_data.csv     - rows that passed every HARD rule
-        data/invalid_records.csv - quarantined rows + the list of broken rules
-
-Handling strategy
-  * HARD rule violation  -> row is quarantined (written to invalid_records.csv, not processed further).
-  * Duplicate key (symbol, open_time) is a SOFT rule: the row is reported but passed on, because
-    removing duplicates is the job of the cleaning stage (cleaner.py), where it is demonstrated.
-  * Rows flagged is_test=True are ALWAYS excluded from the final data (safety net).
-
-The 10 validation rules (see build_schema):
-  1 open_time present and valid datetime       6 high >= max(open, close) and low <= min(open, close)
-  2 symbol in allowed list                     7 close_time > open_time
-  3 open/high/low/close > 0                    8 (symbol, open_time) unique   [soft]
-  4 volume (and quote_volume) >= 0             9 interval == "1h"
-  5 trades_count whole number >= 0            10 open_time not in the future
-
-Usage: python -m src.validator [--self-test]
-"""
 import argparse
 import logging
 import sys
@@ -26,9 +5,9 @@ import time
 
 import pandas as pd
 
-try:                                   # newer Pandera versions
+try:                                   
     import pandera.pandas as pa
-except ImportError:                    # Pandera 0.20.x
+except ImportError:                    
     import pandera as pa
 from pandera.errors import SchemaErrors
 
@@ -127,8 +106,8 @@ def run_validation(raw: pd.DataFrame) -> dict:
                if len(hard) else pd.Series(dtype=object))
     hard_idx = set(reasons.index)
     test_idx = set(typed.index[typed["is_test"]])
-    leaked_tests = test_idx - hard_idx                   # test rows the schema did NOT catch
-    quarantine_idx = hard_idx | test_idx                 # tests are always excluded
+    leaked_tests = test_idx - hard_idx                  
+    quarantine_idx = hard_idx | test_idx                
 
     invalid = raw.reset_index(drop=True).loc[sorted(quarantine_idx)].copy()
     invalid["errors"] = [reasons.get(i, "is_test_record (not caught by schema)") for i in invalid.index]
@@ -155,10 +134,10 @@ def run_self_test() -> dict:
              "trades_count": 50, "is_test": False}
         r.update(kw)
         return r
-    rows = [row(0), row(1), row(2),                                   # 3 valid
-            row(3, close=-5.0, is_test=True),                         # negative price
-            row(4, symbol="FAKECOIN", is_test=True),                  # unknown symbol
-            row(5, high=50.0, is_test=True)]                          # high < low
+    rows = [row(0), row(1), row(2),                                 
+            row(3, close=-5.0, is_test=True),                         
+            row(4, symbol="FAKECOIN", is_test=True),                 
+            row(5, high=50.0, is_test=True)]                      
     result = run_validation(pd.DataFrame(rows))
     assert len(result["valid"]) == 3, f"expected 3 valid, got {len(result['valid'])}"
     assert len(result["invalid"]) == 3, f"expected 3 invalid, got {len(result['invalid'])}"

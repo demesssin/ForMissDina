@@ -1,11 +1,3 @@
-"""Stage 5: load cleaned data into SQLite (idempotent).
-
-Idempotency: PRIMARY KEY (symbol, open_time) + 'INSERT ... ON CONFLICT DO NOTHING'.
-Loading the same dataset twice inserts 0 new rows the second time and changes nothing.
-
-Usage: python -m src.loader           # loads twice and proves idempotency
-       python -m src.loader --once    # loads once
-"""
 import argparse
 import logging
 import sqlite3
@@ -53,7 +45,7 @@ def load_dataframe(conn: sqlite3.Connection, df: pd.DataFrame) -> int:
     """Insert rows; returns the number of rows actually inserted (conflicts are skipped)."""
     rows = [tuple(_py(v) for v in row) for row in df[LOAD_COLUMNS].itertuples(index=False, name=None)]
     changes_before = conn.total_changes
-    with conn:                                           # one transaction: all or nothing
+    with conn:                                          
         conn.executemany(INSERT_SQL, rows)
     return conn.total_changes - changes_before
 

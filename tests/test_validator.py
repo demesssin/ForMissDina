@@ -1,4 +1,3 @@
-"""Validation test: run with  python -m tests.test_validator   (or pytest)."""
 from src.validator import run_self_test
 
 

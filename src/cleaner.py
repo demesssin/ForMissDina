@@ -1,10 +1,3 @@
-"""Stage 4: cleaning and transformation with pandas + NumPy.
-
-Input : data/valid_data.csv   (validated rows)
-Output: data/clean_data.csv   (+ aggregation tables in data/agg_*.csv, pivot/melt tables)
-
-Every step prints WHY it is needed (these explanations go into the report).
-"""
 import logging
 import sys
 
@@ -26,7 +19,6 @@ WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", 
 def clean(df: pd.DataFrame) -> tuple:
     report = {"rows_in": int(len(df))}
 
-    # ---- 1. Missing values ------------------------------------------------------------------
     print("\n[1] MISSING VALUES")
     missing = df.isna().sum()
     print(missing[missing > 0].to_string() if missing.any() else "No missing values found.")
@@ -38,7 +30,6 @@ def clean(df: pd.DataFrame) -> tuple:
     print(f"WHY: rows without price/time cannot be analysed (dropped {before - len(df)}); "
           f"missing volume/trades means no trading, so 0 is a correct fill.")
 
-    # ---- 2. Text normalization --------------------------------------------------------------
     print("\n[2] TEXT NORMALIZATION")
     df["symbol"] = df["symbol"].astype(str).str.strip().str.upper()
     df["interval"] = df["interval"].astype(str).str.strip().str.lower()
@@ -48,7 +39,6 @@ def clean(df: pd.DataFrame) -> tuple:
           "base_asset/quote_asset are extracted from the pair name.")
     print("symbols:", sorted(df["symbol"].unique()))
 
-    # ---- 3. Duplicates ----------------------------------------------------------------------
     print("\n[3] DUPLICATES")
     dup_mask = df.duplicated(subset=["symbol", "open_time"], keep="first")
     report["duplicates_removed"] = int(dup_mask.sum())
@@ -58,7 +48,6 @@ def clean(df: pd.DataFrame) -> tuple:
     df = df[~dup_mask].copy()
     print("WHY: a duplicated candle would double-count volume and bias averages/correlations.")
 
-    # ---- 4. Data types ----------------------------------------------------------------------
     print("\n[4] DATA TYPE CONVERSION")
     df["open_time"] = pd.to_datetime(df["open_time"])
     df["close_time"] = pd.to_datetime(df["close_time"])
@@ -71,11 +60,10 @@ def clean(df: pd.DataFrame) -> tuple:
     print("WHY: datetimes enable time operations, int/float save memory and allow maths, "
           "category speeds up GroupBy; sorting is required for shift()-based returns.")
 
-    # ---- 5. NumPy-based features ------------------------------------------------------------
     print("\n[5] NUMPY OPERATIONS")
-    prev_close = df.groupby("symbol", observed=True)["close"].shift(1)       # previous hour, per coin
-    df["log_return"] = np.log(df["close"] / prev_close)                      # first row per coin = NaN
-    df["price_range_pct"] = (df["high"] - df["low"]) / df["open"] * 100      # hourly volatility proxy
+    prev_close = df.groupby("symbol", observed=True)["close"].shift(1)       
+    df["log_return"] = np.log(df["close"] / prev_close)                      
+    df["price_range_pct"] = (df["high"] - df["low"]) / df["open"] * 100      
     df["body_pct"] = (df["close"] - df["open"]) / df["open"] * 100
     df["price_trend"] = np.select([df["body_pct"] > 0.1, df["body_pct"] < -0.1],
                                   ["up", "down"], default="flat")
@@ -91,7 +79,6 @@ def clean(df: pd.DataFrame) -> tuple:
     print("WHY: log returns are additive and comparable across coins; range% normalizes volatility "
           "by price level; z-score makes volume comparable between BTC and DOGE.")
 
-    # ---- 6. Multi-condition filtering ---------------------------------------------------------
     print("\n[6] FILTERING (3 conditions)")
     mask = ((df["volume"] > df["volume"].median())
             & (df["price_range_pct"] > 1.0)
@@ -102,7 +89,6 @@ def clean(df: pd.DataFrame) -> tuple:
           f"({len(high_activity) / len(df):.1%})")
     print("WHY: isolates 'hot' hours with real market activity for the volatility analysis.")
 
-    # ---- 7. GroupBy + aggregation -------------------------------------------------------------
     print("\n[7] GROUPBY + AGGREGATION")
     by_symbol = df.groupby("symbol", observed=True).agg(
         candles=("close", "size"),
@@ -123,7 +109,6 @@ def clean(df: pd.DataFrame) -> tuple:
     print("-- by symbol --");  print(by_symbol.to_string())
     print("-- by weekday --"); print(by_weekday.to_string())
 
-    # ---- 8. Reshaping ---------------------------------------------------------------------------
     print("\n[8] RESHAPING (pivot_table -> melt)")
     pivot = df.pivot_table(index="hour", columns="symbol", values="volume_zscore",
                            aggfunc="mean", observed=True).round(4)

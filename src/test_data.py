@@ -1,11 +1,3 @@
-"""Deliberately broken records used to PROVE that validation and cleaning work.
-
-The producer adds these (unless --no-inject is used) to the stream:
-  * 5 invalid test records, all flagged is_test=True (they must be caught by Pandera and
-    must never reach the final dataset);
-  * 5 exact duplicates of real records (is_test=False) to demonstrate duplicate handling.
-The original data/raw_data.csv is NOT modified.
-"""
 import copy
 import random
 

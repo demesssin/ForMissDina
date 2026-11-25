@@ -1,4 +1,3 @@
-"""Draws the pipeline architecture diagram -> figures/architecture.png (for the report)."""
 import sys
 
 import matplotlib

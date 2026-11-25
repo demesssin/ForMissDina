@@ -19,7 +19,7 @@
   "rows_dropped_missing": 0,
   "high_activity_candles": 1144,
   "db_rows": 5000,
-  "load1_inserted": 5000,
+  "load1_inserted": 0,
   "load2_inserted": 0,
   "idempotent": true
 }

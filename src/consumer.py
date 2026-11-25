@@ -1,13 +1,3 @@
-"""Stage 2b: Kafka CONSUMER (separate script).
-
-Reads this run's messages from the topic, deserializes JSON, saves data/consumed_data.csv.
-
-Termination conditions (so the pipeline finishes):
-  1. consumed == number published by the producer, OR
-  2. no new message for CONSUMER_IDLE_TIMEOUT_S seconds (CONSUMER_FIRST_MSG_TIMEOUT_S before the first one).
-
-Usage:  python -m src.consumer
-"""
 import json
 import logging
 import sys
@@ -68,11 +58,11 @@ def main() -> int:
             last_message_at = time.time()
             headers = dict(msg.headers() or [])
             if run_id and headers.get("run_id", b"").decode("utf-8", "ignore") != run_id:
-                other_runs += 1                       # message from an older pipeline run
+                other_runs += 1                       
                 continue
             try:
                 records.append(deserialize(msg.value()))
-            except (ValueError, UnicodeDecodeError) as exc:   # JSONDecodeError is a ValueError
+            except (ValueError, UnicodeDecodeError) as exc:   
                 corrupted += 1
                 log.error("Corrupted message skipped (partition %s, offset %s): %s",
                           msg.partition(), msg.offset(), exc)

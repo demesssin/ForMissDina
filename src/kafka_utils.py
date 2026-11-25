@@ -1,4 +1,3 @@
-"""Small helpers shared by producer and consumer: wait for the broker and create the topic."""
 import logging
 import time
 
@@ -41,7 +40,7 @@ def ensure_topic(admin: AdminClient) -> None:
             except KafkaException as exc:
                 if "TOPIC_ALREADY_EXISTS" not in str(exc):
                     raise
-    deadline = time.time() + 20                              # wait until metadata shows the topic
+    deadline = time.time() + 20                             
     while config.KAFKA_TOPIC not in admin.list_topics(timeout=10).topics:
         if time.time() > deadline:
             raise RuntimeError(f"Topic '{config.KAFKA_TOPIC}' did not appear in broker metadata")

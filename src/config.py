@@ -13,39 +13,39 @@ FIG_DIR = ROOT / "figures"
 SQL_DIR = ROOT / "sql"
 DOCS_DIR = ROOT / "docs"
 
-RAW_CSV = DATA_DIR / "raw_data.csv"              # untouched API data
-CONSUMED_CSV = DATA_DIR / "consumed_data.csv"    # what the Kafka consumer received
-VALID_CSV = DATA_DIR / "valid_data.csv"          # passed Pandera validation
-INVALID_CSV = DATA_DIR / "invalid_records.csv"   # quarantined records + reasons
-CLEAN_CSV = DATA_DIR / "clean_data.csv"          # after cleaning/transformation
+RAW_CSV = DATA_DIR / "raw_data.csv"             
+CONSUMED_CSV = DATA_DIR / "consumed_data.csv"   
+VALID_CSV = DATA_DIR / "valid_data.csv"          
+INVALID_CSV = DATA_DIR / "invalid_records.csv"   
+CLEAN_CSV = DATA_DIR / "clean_data.csv"          
 DB_PATH = DATA_DIR / "output.db"
-STATS_JSON = DATA_DIR / "pipeline_stats.json"    # counters passed between stages
+STATS_JSON = DATA_DIR / "pipeline_stats.json" 
 
-# ---- API (Binance public market data, no key needed) ----
+
 API_BASE_URLS = [
     "https://api.binance.com",
-    "https://data-api.binance.vision",   # official public mirror, same endpoints
+    "https://data-api.binance.vision",  
     "https://api1.binance.com",
 ]
 API_ENDPOINT = "/api/v3/klines"
 SYMBOLS = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT",
            "ADAUSDT", "DOGEUSDT", "AVAXUSDT", "TRXUSDT", "LINKUSDT"]
 INTERVAL = "1h"
-LIMIT = 500                 # completed candles per symbol -> 10 x 500 = 5000 records
-REQUEST_TIMEOUT = 10        # seconds
+LIMIT = 500                 
+REQUEST_TIMEOUT = 10        
 MAX_RETRIES = 3
-MIN_RECORDS = 200           # course minimum
+MIN_RECORDS = 200          
 
-# ---- Kafka ----
+
 KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 KAFKA_TOPIC = os.getenv("KAFKA_TOPIC", "crypto_klines")
 KAFKA_PARTITIONS = 3
 KAFKA_REPLICATION = 1
-CONSUMER_FIRST_MSG_TIMEOUT_S = 30   # max wait for the very first message
-CONSUMER_IDLE_TIMEOUT_S = 15        # stop after this many seconds without new messages
+CONSUMER_FIRST_MSG_TIMEOUT_S = 30   
+CONSUMER_IDLE_TIMEOUT_S = 15        
 
 
-# ---- Stats helpers ----
+
 def load_stats() -> dict:
     if STATS_JSON.exists():
         return json.loads(STATS_JSON.read_text(encoding="utf-8"))
